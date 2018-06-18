@@ -1,0 +1,17 @@
+<%= render 'users/user' %>
+
+<table>
+  <thead>
+    <tr>
+      <th><%= "Followers(#{@user.followers.count})" %></th>
+      <th colspan="3"></th>
+    </tr>
+  </thead> 
+  <tbody>
+    <% @user.followers.each do |u| %>
+      <tr>
+        <td><%= u.name %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

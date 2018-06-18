@@ -1,0 +1,105 @@
+<p id="notice"><%#= notice %></p>
+
+<%= render "users/user" %>
+
+<table>
+  <thead>
+    <tr>
+      <th>Posts</th>
+      <th colspan="3">
+        <%#= form_tag user_path(@user), method: :get do %>
+          <%#= text_field_tag :search, params[:search] %>
+          <%#= submit_tag "search", name: nil %>
+        <%# end %>
+        <%= search_form_for @q, url: user_path(@user) do |f| %>
+          <%#= f.label :name_cont %>
+          <%= f.text_field :body_cont %>
+          <%= f.submit %>
+        <% end %>
+      </th>
+    </tr>
+  </thead>
+  
+  <tbody>
+    <% @posts.each do |post| %>
+      <tr>
+        <td><%= post.body %></td>
+        <td><%= post.created_at %></td>
+        <td>
+          <% if @user == current_user %>
+            <%= link_to '[X]', post, method: :delete, data: { confirm: 'Are you sure?' } %>
+          <% end %>
+          <% if @user == current_user %>
+            <% if post.liked_by? current_user %>
+              <%= link_to 'Unlike', post_likes_path(post), method: :delete %>
+            <% else %>
+              <%= link_to 'Like', post_likes_path(post), method: :post %>
+            <% end %>
+          <% end %>
+        </td>
+        <td colspan="3"></td> 
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<% if @user == current_user %>
+  <%= form_with(model: @user.posts.new, local: true) do |form| %>
+  <%#= form_for @user.posts.new do |form| %>
+    <div class="field">
+      <%#= form.label :body %>
+      <%= form.text_area :body, id: :post_body %>
+    </div>
+
+    <div class="actions">
+      <%= form.submit %>
+    </div>
+  <% end %>
+<% end %>
+
+<% if @user == current_user %>
+  <table>
+    <thead>
+      <tr>
+        <th>Following's Posts</th>
+        <th colspan="3">
+          <%#= form_tag user_path(@user), method: :get do %>
+            <%#= text_field_tag :search_f_p, params[:search_f_p] %>
+            <%#= submit_tag "search", name: nil %>
+          <%# end %>
+          <%= search_form_for @q, url: user_path(@user) do |f| %>
+            <%#= f.label :name_cont %>
+            <%= f.text_field :body_eq %>
+            <%= f.submit %>
+          <% end %>
+        </th>
+      </tr>
+    </thead> 
+    <tbody>
+      <% @following_posts.each do |p| %>
+        <tr>
+          <td><%= p.body %></td>
+          <td>
+            <% if @user == current_user %>
+              <% if p.liked_by? current_user %>
+                <%= link_to 'Unlike', post_likes_path(p), method: :delete %>
+              <% else %>
+                <%= link_to 'Like', post_likes_path(p), method: :post %>
+              <% end %>
+            <% end %>
+          </td>
+          <td><%= "(by #{p.user.name} #{p.created_at})" %></td>
+          <td>
+            <% if current_user.following?(p.user) %>
+              <%= link_to 'Unfollow', user_relations_path(p.user), method: :delete %>
+            <% else %>          
+              <%= link_to 'Follow', user_relations_path(p.user), method: :post %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
+
+

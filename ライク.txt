@@ -1,0 +1,38 @@
+    ログインユーザー以外のshowのpostにライクボタン
+    following_postにライクボタン
+    ログインユーザーのshowにliked_post一覧
+
+    following/followers/likes
+
+rails g model Like user_id:integer post_id:integer
+add_index :likes, :user_id
+add_index :likes, :post_id
+add_index :likes, [:user_id, :post_id], unique: true
+rails db:migrate
+
+resources :posts do
+  resource :likes, only: [:create, :destroy]
+end
+
+class Like < ActiveRecord::Base
+  belongs_to :user
+  belongs_to :post
+    validates :user_id, presence: true
+    validates :post_id, presence: true
+end
+class User < ActiveRecord::Base
+  has_many :posts, dependent: :destroy
+  has_many :likes, dependent: :destroy
+end
+class Post < ActiveRecord::Base
+  belongs_to :user
+  has_many :likes, dependent: :destroy
+end
+
+def p_liked_by? current_user
+  likes.user_id.include?(current_user.id)
+  likes.find_by(user_id: current_user.id)
+  likes.where(user_id: current_user.id).exists?
+end
+
+rails g controller Likes

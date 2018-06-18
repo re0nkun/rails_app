@@ -1,0 +1,29 @@
+version: '3'
+services:
+  # db:
+  #   image: mysql:5.7.20
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=password
+  smtp:
+    image: schickling/mailcatcher
+    ports:
+      - "1080:1080"
+      - "1025:1025"
+  db:
+    image: postgres
+  adminer:
+    image: adminer
+    ports:
+      - 8080:8080
+    links:
+      - db
+  web:
+    build: .
+    command: bash -c "touch /myapp/tmp/pids/server.pid && rm /myapp/tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'"
+    # command: bundle exec rails s -p 3000 -b '0.0.0.0'
+    volumes:
+      - .:/myapp:cached
+    ports:
+      - 3000:3000
+    depends_on:
+      - db

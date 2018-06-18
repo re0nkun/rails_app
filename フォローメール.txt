@@ -1,0 +1,91 @@
+    //docker_compose.yml
+      smtp:
+      image: schickling/mailcatcher
+      ports:
+        - "1080:1080"
+        - "1025:1025"
+    //config/environments/development.rb
+      # MailCatcher
+      config.action_mailer.delivery_method = :smtp
+      config.action_mailer.smtp_settings = { :address => "host.docker.internal", :port => 1025 }
+      config.action_mailer.raise_delivery_errors = true
+    
+
+    rails g mailer RelationMailer
+
+    class RelationMailer < ApplicationMailer
+      def follow_notice(followed, follower)
+        @followed = followed
+        @follower = follower
+        mail to: @followed.email, subject: "#{@follower.name} started following you"
+      end
+      def unfollow_notice(followed, follower)
+        @followed = followed
+        @follower = follower
+        mail to: @followed.email, subject: "#{@follower.name} unfollowed you"
+      end
+    end
+
+    //follow_notice.html.erb
+      <h1>Sample App</h1>
+      <p>Hi <%= @user.name %>,</p>
+      <p>
+        <%= @follower.name %> started following you!
+        Click on the link below to check your followers:
+      </p>
+      <%= link_to "Your follower list", followers_user_url(@user) %>
+    //unfollow_notice.html.erb
+      <h1>Sample App</h1>
+      <p>Hi <%= @user.name %>,</p>
+      <p>
+        <%= @follower.name %> unfollowed you.
+        Click on the link below to check your followers:
+      </p>
+      <%= link_to "Your follower list", followers_user_url(@user) %>
+
+    class RelationMailerPreview < ActionMailer::Preview
+      def follow_notification
+        user = User.first
+        follower = User.second
+        RelationMailer.follow_notification(user, follower)
+      end
+      def unfollow_notification
+        user = User.first
+        follower = User.second
+        RelationMailer.unfollow_notification(user, follower)
+      end
+    end
+
+  //relation.rb
+  def Relation.send_follow_email(user, follower)
+    RelationMailer.follow_notification(user, follower).deliver_now
+  end
+  def Relation.send_unfollow_email(user, follower)
+    RelationMailer.unfollow_notification(user, follower).deliver_now
+  end
+
+def follow(other_user)
+  active_relationships.create(followed_id: other_user.id)
+  Relation.send_follow_email(other_user, self)
+end
+def unfollow(other_user)
+  active_relationships.find_by(followed_id: other_user.id).destroy
+  Relation.send_unfollow_email(other_user, self)
+end
+
+
+
+
+    rails g migration add_follow_notification_to_users follow_notification:boolean
+    add_column :users, :follow_notification, :boolean, default:false
+
+    <%= f.check_box :follow_notification %>
+    def user_params
+      params.require(:user).permit(:name, :email, :password, :password_confirmation, :follow_notification)
+    end
+    if other_user.follow_notification
+      Relationship.send_follow_email(other_user, self)
+    end
+    if other_user.follow_notification
+      Relationship.send_unfollow_email(other_user, self)
+    end

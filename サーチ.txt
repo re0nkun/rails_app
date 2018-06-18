@@ -1,0 +1,88 @@
+    <%= form_tag users_path do %>
+      <%= text_field_tag :search, params[:search] %>
+      <%= submit_tag 'Search', :name => nil %>
+    <% end %>
+    @users = User.search(params[:search])
+    class User < ApplicationRecord
+      def self.search(s)
+        if s
+          where(['name LIKE ?', "%#{s}%"])
+        else
+          all
+        end
+      end
+    end
+
+    <%= form_tag users_path, method: :get do %>
+      <%= text_field_tag :search, params[:search] %>
+      <%= submit_tag 'Search', :name => nil %>
+    <% end %>
+    @user = User.find(params[:id])
+    @posts = @user.posts.search(params[:search])
+    class Post < ApplicationRecord
+      def self.search(s)
+        if search
+          where(['content LIKE ?', "%#{s}%"])
+        else
+          all
+        end
+      end
+    end
+
+    //Ransack
+    gem 'ransack'
+    bundle install
+    <%= search_form_for @q do |f| %>
+      <%= f.label :name_cont, 'User Search' %>
+      <%= f.text_field :name_cont %>
+      <%= f.submit 'Go' %>
+    <% end %>
+    def index
+      if params[:q] && params[:q].reject { |key, value| value.blank? }.present?
+        @q = User.ransack(search_params)
+      else
+        @q = User.ransack()
+      end
+      @users = @q.result
+    end
+    private
+      def search_params
+        params.require(:q).permit(:name_cont)
+      end
+
+
+
+    <%= search_form_for @q, url: @url do |f| %>
+      <%= f.label :content_cont, 'Post Search' %>
+      <%= f.text_field :content_cont %>
+      <%= f.submit 'Go'%>
+    <% end %>
+
+    def home
+    if params[:q] && params[:q].reject { |key, value| value.blank? }.present?
+      @q = current_user.feed.ransack(posts_search_params)
+      @feed_items = @q.result
+    else
+      @q = Post.none.ransack
+      @feed_items = current_user.feed
+    end
+    @url = root_path
+
+    def show
+    if params[:q] && params[:q].reject { |key, value| value.blank? }.present?
+      @q = @user.posts.ransack(posts_search_params)
+      @posts = @q.result
+    else
+      @q = Post.none.ransack
+      @posts = @user.posts
+    end
+    @url = user_path(@user)
+
+    private
+      def posts_search_params
+        params.require(:q).permit(:content_cont)
+      end
+
+def create
+else
+  @q = Micropost.none.ransack
